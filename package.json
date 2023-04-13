@@ -27,6 +27,7 @@
   "dependencies": {
     "@vueuse/core": "^8.2.0",
     "axios": "^0.26.1",
+    "dayjs": "^1.11.7",
     "element-plus": "^2.3.3",
     "pinia": "^2.0.12",
     "screenfull": "^6.0.2",

@@ -1,8 +1,10 @@
+import * as dayjs from 'dayjs';
+export const formatDate = (): string => {
+  const date = new Date();
+  return dayjs(date).format('HH:mm');
+};
 export const formatTime = (): string => {
   const date = new Date();
-  const hour =
-    date.getHours() < 10 ? +('0' + date.getHours()) : date.getHours();
-  const minute =
-    date.getMinutes() < 10 ? +('0' + date.getMinutes()) : date.getMinutes();
-  return `${hour}:${minute}`;
+
+  return dayjs(date).format('YYYY/MM/DD HH:mm:ss');
 };
