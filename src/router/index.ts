@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/',
+    path: '/centralControl',
     name: 'centralControl',
     meta: {
       title: 'centralControl'
@@ -10,14 +10,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/pages/centralControl.vue')
   },
   {
-    path: '/screen',
-    name: 'screen',
+    path: '/',
+    name: 'home',
     meta: {
       title: '首页',
       keepAlive: true,
       requireAuth: true
     },
-    component: () => import('@/pages/screen.vue')
+    component: () => import('@/pages/home.vue')
   }
 ];
 

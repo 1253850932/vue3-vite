@@ -14,7 +14,36 @@
     action: boolean;
     class?: string;
   }
-
+  interface IMethod {
+    /** 手动 */
+    manual: boolean;
+    /** 自动 */
+    automatic: boolean;
+  }
+  interface IWarning {
+    /** 错误警告标题 */
+    info: string;
+    /** 触发时间 */
+    time: string;
+    /** 警告地点信息 */
+    address: {
+      /** 警告地点楼层 */
+      floor: string;
+      info: string;
+      /** 警告地点 */
+      place: string;
+    };
+  }
+  interface IControlDisplay {
+    id: number;
+    label: string;
+    action: boolean;
+  }
+  const props = defineProps<{
+    method: IMethod;
+    warning: IWarning;
+    controlDisplay: IControlDisplay[];
+  }>();
   // 时间
   let curDate = ref<string>('');
   let curTime = ref<string>('');
@@ -26,7 +55,6 @@
   });
 
   //   方式
-
   const method: Array<IMenuList> = reactive([
     { id: 14, label: '自动方式', action: false },
     { id: 7, label: '手动方式', action: true }
@@ -35,23 +63,7 @@
     { id: 3, label: '火警', action: false },
     { id: 4, label: '自动', action: false }
   ]);
-  const controlDisplay: Array<IMenuList> = reactive([
-    { id: 5, label: '监管报警', action: false },
-    { id: 6, label: '故障', action: false },
-    { id: 7, label: '自动延时', action: false },
-    { id: 8, label: '反馈', action: false },
-    { id: 9, label: '手动报警', action: false },
-    { id: 10, label: '屏蔽', action: false },
-    { id: 11, label: '系统故障', action: false },
-    { id: 12, label: '消音', action: false },
-    { id: 13, label: '运行', action: false },
-    { id: 14, label: '自检', action: false },
-    { id: 15, label: '主电运行', action: false },
-    { id: 16, label: '备电运行', action: false },
-    { id: 17, label: '主电故障', action: false },
-    { id: 18, label: '备电故障', action: false }
-  ]);
-
+  let controlDisplay: Array<IMenuList> = reactive([]);
   const menuList: Array<IMenuList> = reactive([
     { id: 1, label: 'F1', action: false, class: 'routine' },
     { id: 2, label: 'F2', action: false, class: 'routine' },
@@ -186,14 +198,20 @@
       { id: 4, label: 'F4查监管' },
       { id: 5, label: 'F5查屏障' },
       { id: 6, label: 'F6查反馈' }
+    ],
+    childrenMenu: [
+      { id: 7, label: 'F1001' },
+      { id: 8, label: 'F1上一页' },
+      { id: 9, label: 'F3下一页' },
+      { id: 10, label: 'F3退出' }
     ]
   });
   let step = reactive<Array<number>>([]);
   let number = reactive({
     id: 0
   });
-  let curInfo = ref();
-  const menuHandler = (e: any) => {
+  let curInfo = ref<any>();
+  const menuHandler = (e: any): void => {
     //手动自动方式
     if (e.id === 14) {
       panel.method.function.automatic = !panel.method.function.automatic;
@@ -210,16 +228,34 @@
     }
     step.push(e.id);
     let forwardIndex = step.findIndex((i) => i === 11);
-    console.log('output-', forwardIndex, step);
+    searchChildren(e.id, forwardIndex);
   };
+  const searchChildren = (id: number, index: number) => {
+    const idList = [8, 9, 10, 15, 16];
 
-  const searchHandler = (id: number, arr: any, change: boolean) => {
+    let i = idList.find((i) => i === id);
+    let idListIndex = idList.findIndex((i) => i === id);
+    console.log('output-i', i);
+    if (index >= 0 && i) {
+      curInfo.value = '';
+
+      curInfo.value = panel.queryMenu[idListIndex].showInfo.info;
+    }
+    if (index >= 0 && id === 1) {
+      curInfo.value = '';
+      curInfo.value = panel.test.map((i) => i.label);
+    }
+  };
+  const searchHandler = (id: number, arr: any, change: boolean): void => {
     arr.forEach((i: any): void => {
       if (i.id === id) {
         i.action = change;
       }
     });
   };
+
+  // eslint-disable-next-line vue/no-setup-props-destructure
+  controlDisplay = props.controlDisplay;
 </script>
 <template>
   <div class="container">
@@ -241,12 +277,22 @@
         <div class="menuList">
           <div class="menuList-top">
             <div v-for="item in fire" :key="item.id">
-              <img src="@/assets/img/按钮黑色_01.gif" />{{ item.label }}
+              <div v-if="item.action === false">
+                <img src="@/assets/img/按钮黑色_01.gif" />{{ item.label }}
+              </div>
+              <div v-else>
+                <img src="@/assets/img/按钮绿色_01.gif" />{{ item.label }}
+              </div>
             </div>
           </div>
           <div class="menuList-middle">
             <div v-for="item in controlDisplay" :key="item.id">
-              <img src="@/assets/img/按钮黑色_01.gif" />{{ item.label }}
+              <div v-if="item.action === false">
+                <img src="@/assets/img/按钮黑色_01.gif" />{{ item.label }}
+              </div>
+              <div v-else>
+                <img src="@/assets/img/按钮绿色_01.gif" />{{ item.label }}
+              </div>
             </div>
           </div>
         </div>
@@ -264,10 +310,13 @@
                   <div>{{ panel.warning.address.place }}</div>
                 </div>
                 <div v-show="1 === number.id">
-                  <div>
+                  <div v-if="curInfo && Array.isArray(curInfo)">
                     <div v-for="(item, index) in curInfo" :key="index">{{
                       item
                     }}</div>
+                  </div>
+                  <div v-else>
+                    <div>{{ curInfo }}</div>
                   </div>
                 </div>
               </div>
