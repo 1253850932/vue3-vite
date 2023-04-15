@@ -7,6 +7,8 @@
 <script setup lang="ts">
   import { reactive } from 'vue';
   import CentralControl from './centralControl.vue';
+  import GraphicDisplay from './graphicDisplay.vue';
+  import ControlledEquipment from './controlledEquipment.vue';
   const warning = reactive({
     info: 'test',
     time: '2023-04-11',
@@ -36,13 +38,95 @@
     { id: 17, label: '主电故障', action: false },
     { id: 18, label: '备电故障', action: false }
   ]);
+  const tableData = [
+    {
+      id: 1,
+      date: '2016-05-03',
+      controller: 1,
+      loop: 1,
+      position: 2,
+      category: 3,
+      status: '已布点',
+      describe: '故障部位：消防电梯故障一层电梯厅旁',
+      building: '某大楼',
+      floor: '一层',
+      operator: '***',
+      phone: '027*******',
+      type: 'fire'
+    },
+    {
+      id: 2,
+      date: '2016-05-03',
+      controller: 2,
+      loop: 2,
+      position: 2,
+      category: 3,
+      status: '已布点',
+      describe: '故障部位：消防电梯故障一层电梯厅旁',
+      building: '某大楼',
+      floor: '一层',
+      operator: '***',
+      phone: '027*******',
+      type: 'fault'
+    },
+    {
+      id: 3,
+      date: '2016-05-03',
+      controller: 3,
+      loop: 3,
+      position: 3,
+      category: 3,
+      status: '已布点',
+      describe: '故障部位：消防电梯故障一层电梯厅旁',
+      building: '某大楼',
+      floor: '一层',
+      operator: '***',
+      phone: '027*******',
+      type: 'supervise'
+    }
+  ];
+  let equipmentStatus = reactive([
+    { action: false, feedback: false, operation: 1, name: '防火卷帘' },
+    { action: false, feedback: false, operation: 2, name: '消防电梯' },
+    { action: false, feedback: false, operation: 3, name: '送风口' },
+    { action: false, feedback: false, operation: 4, name: '排烟阀' },
+    { action: false, feedback: false, operation: 5, name: '前室送风口' },
+    { action: false, feedback: false, operation: 6, name: '挡烟垂壁' },
+    { action: false, feedback: false, operation: 7, name: '排烟口' }
+  ]);
+  let equipment = reactive([
+    {
+      start: false,
+      feedback: false,
+      fault: false,
+      startButton: false,
+      stopButton: false,
+      name: '消防水泵'
+    },
+    {
+      start: false,
+      feedback: false,
+      fault: false,
+      startButton: false,
+      stopButton: false,
+      name: '防烟风机'
+    },
+    {
+      start: false,
+      feedback: false,
+      fault: false,
+      startButton: false,
+      stopButton: false,
+      name: '排烟风机'
+    }
+  ]);
 </script>
 <template>
   <div class="container">
-    <CentralControl
-      :warning="warning"
-      :control-display="controlDisplay"
+    <ControlledEquipment
+      :equipment-status="equipmentStatus"
       :method="method"
+      :equipment="equipment"
     />
   </div>
 </template>

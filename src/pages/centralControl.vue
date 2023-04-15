@@ -6,8 +6,7 @@
 -->
 <script setup lang="ts">
   import { formatDate, formatTime } from '@/utils/formatTime';
-  import { ref, onMounted, reactive } from 'vue';
-
+  import { ref, onMounted, reactive, h } from 'vue';
   interface IMenuList {
     id: number;
     label: string;
@@ -54,6 +53,7 @@
     });
   });
 
+  let controlDisplay: Array<IMenuList> = reactive([]);
   //   方式
   const method: Array<IMenuList> = reactive([
     { id: 14, label: '自动方式', action: false },
@@ -63,7 +63,6 @@
     { id: 3, label: '火警', action: false },
     { id: 4, label: '自动', action: false }
   ]);
-  let controlDisplay: Array<IMenuList> = reactive([]);
   const menuList: Array<IMenuList> = reactive([
     { id: 1, label: 'F1', action: false, class: 'routine' },
     { id: 2, label: 'F2', action: false, class: 'routine' },
@@ -109,15 +108,17 @@
         automatic: false
       }
     },
-    warning: {
-      info: '首警',
-      time: curTime.value,
-      address: {
-        floor: '1-1',
-        info: '感温探测器火警',
-        place: '负一层电梯厅旁'
+    warning: [
+      {
+        info: '首警',
+        time: '22/4/4',
+        address: {
+          floor: '1-1',
+          info: '感温探测器火警',
+          place: '负一层电梯厅旁'
+        }
       }
-    },
+    ],
 
     test: [
       {
@@ -154,7 +155,7 @@
         id: 1,
         label: '1 查询配置设备总数 ',
         showInfo: {
-          info: 'XXX 回路 XX机',
+          info: '***回路**机',
           parentId: 1
         }
       },
@@ -162,7 +163,7 @@
         id: 2,
         label: '2 设备状态查询 ',
         showInfo: {
-          info: 'XXX 回路 XX机  XX 机',
+          info: '***回路**机',
           parentId: 1
         }
       },
@@ -199,20 +200,40 @@
       { id: 5, label: 'F5查屏障' },
       { id: 6, label: 'F6查反馈' }
     ],
-    childrenMenu: [
+    childrenOneMenu: [
       { id: 7, label: 'F1001' },
-      { id: 8, label: 'F1上一页' },
+      { id: 8, label: 'F2上一页' },
       { id: 9, label: 'F3下一页' },
-      { id: 10, label: 'F3退出' }
+      {},
+      { id: 10, label: 'F6退出' }
+    ],
+    childrenTwoMenu: [
+      { id: 11, label: 'F1查询' },
+      { id: 12, label: 'F2测试' },
+      { id: 13, label: 'F3设置' },
+      { id: 14, label: 'F4安装' },
+      { id: 15, label: 'F5系统' },
+      { id: 16, label: 'F6退出' }
+    ],
+    childrenThreeMenu: [
+      { id: 17, label: 'F1清空' },
+      {},
+      {},
+      { id: 18, label: 'F5确定' },
+
+      { id: 19, label: 'F6退出' }
     ]
   });
   let step = reactive<Array<number>>([]);
   let number = reactive({
     id: 0
   });
+
+  let menuFnList = ref();
   let curInfo = ref<any>();
+  menuFnList.value = panel.menu;
+
   const menuHandler = (e: any): void => {
-    //手动自动方式
     if (e.id === 14) {
       panel.method.function.automatic = !panel.method.function.automatic;
       searchHandler(e.id, method, panel.method.function.automatic);
@@ -224,28 +245,72 @@
     if (e.id === 11) {
       number.id = 1;
       curInfo.value = panel.queryMenu.map((i) => i.label);
-      console.log('output-curInfo', curInfo);
+      menuFnList.value = panel.childrenTwoMenu;
     }
+    if (e.id >= 1 && e.id <= 5) {
+      menuFnList.value = panel.childrenOneMenu;
+    }
+    if (e.id === 6) {
+      menuFnList.value = panel.menu;
+      number.id = 0;
+      searchChildrenStep = 0;
+    }
+    if (e.id === 21) {
+      menuFnList.value = panel.menu;
+      number.id = 0;
+      searchChildrenStep = 0;
+    }
+
     step.push(e.id);
     let forwardIndex = step.findIndex((i) => i === 11);
-    searchChildren(e.id, forwardIndex);
+    const idList = [8, 9, 10, 15, 16, 30];
+    let i = idList.find((i) => i === e.id);
+    let idIndex = idList.findIndex((i) => i === e.id);
+    i && searchChildren(e.id, forwardIndex, i, idIndex);
+    if (searchChildrenStep >= 2 && e.id === 1) {
+      curInfo.value = '***回路**机';
+      searchChildrenStep = 1;
+      menuFnList.value = panel.childrenThreeMenu;
+    }
+    if (searchChildrenStep >= 2 && idIndex >= 0) {
+      let index = searchChildrenStep - 2;
+      if (index >= 3) index += 2;
+      curInfo.value = setChartOnIndex(curInfo.value, index, e.label);
+    }
+    if (searchChildrenStep === 1 && e.id === 3) {
+      console.log('output->1', 1);
+      curInfo.value = panel.queryMenu.map((i) => i.label);
+    }
   };
-  const searchChildren = (id: number, index: number) => {
-    const idList = [8, 9, 10, 15, 16];
 
-    let i = idList.find((i) => i === id);
-    let idListIndex = idList.findIndex((i) => i === id);
-    console.log('output-i', i);
-    if (index >= 0 && i) {
+  let searchChildrenStep = 0;
+  /**
+   * @description 改变列表函数
+   * @param id
+   * @param index
+   * @param i
+   * @param idIndex
+   */
+  const searchChildren = (
+    id: number,
+    index: number,
+    i: string | number,
+    idIndex: number
+  ) => {
+    searchChildrenStep = searchChildrenStep + 1;
+    menuFnList.value = panel.childrenThreeMenu;
+    if (index >= 0 && i && searchChildrenStep === 1) {
       curInfo.value = '';
-
-      curInfo.value = panel.queryMenu[idListIndex].showInfo.info;
+      curInfo.value = panel.queryMenu[idIndex].showInfo.info;
     }
     if (index >= 0 && id === 1) {
       curInfo.value = '';
       curInfo.value = panel.test.map((i) => i.label);
     }
   };
+  /**
+   * @description  修改自动|手动方式
+   */
   const searchHandler = (id: number, arr: any, change: boolean): void => {
     arr.forEach((i: any): void => {
       if (i.id === id) {
@@ -253,12 +318,55 @@
       }
     });
   };
-
+  /**
+   * @description   修改回路字符串函数
+   * @function setChartOnIndex
+   * @param  str 回路字符串
+   * @param  index 修改当前索引
+   * @param  char 修改当前字符
+   */
+  const setChartOnIndex = (str: string, index: number, char: string) => {
+    if (index > str.length - 1) return str;
+    if (index >= 0 && index <= 2) {
+      return str.substring(0, index) + char + str.substring(index + 1);
+    }
+    if (index >= 5 && index <= 6) {
+      return str.substring(0, index) + char + str.substring(index + 1);
+    }
+    if (index >= 7) return str;
+  };
   // eslint-disable-next-line vue/no-setup-props-destructure
   controlDisplay = props.controlDisplay;
+  /**
+   * 打开放大镜展示函数
+   */
+  const list = () => {
+    ElMessageBox.alert(
+      `
+    <div style="width:150px;height:400px">
+  ${panel.warning.map((i) => {
+    return `
+  	<div style="font-size:20px;color:red">${i.info}</div>
+  	<div  style="font-size:16px">${i.time}</div>
+  	<div  style="font-size:16px">${i.address.floor}</div>
+  	<div style="font-size:16px">${i.address.info}</div>
+  	<div  style="font-size:16px">${i.address.place}</div>
+  	`;
+  })}
+
+  	</div>
+  	`,
+
+      {
+        showConfirmButton: false,
+        dangerouslyUseHTMLString: true
+      }
+    );
+  };
 </script>
 <template>
-  <div class="container">
+  <div class="centralControlSystem">
+    <img class="zoomIn" src="@/assets/img/组 5拷贝.png" @click="list" />
     <div class="control">
       <div class="control-left">
         <div class="time">
@@ -303,11 +411,15 @@
             <div class="screen-top">{{ panel.info }}</div>
             <div class="screen-middle">
               <div class="screen-info-left">
-                <div v-show="0 === number.id">
-                  <span>{{ panel.warning.info }}</span>
-                  <span>{{ panel.warning.address.floor }}</span>
-                  <span>{{ panel.warning.address.info }}</span>
-                  <div>{{ panel.warning.address.place }}</div>
+                <div
+                  v-for="(i, index) in panel.warning"
+                  v-show="0 === number.id"
+                  :key="index"
+                >
+                  <span class="info">{{ i.info }}</span>
+                  <span>{{ i.address.floor }}</span>
+                  <span>{{ i.address.info }}</span>
+                  <div>{{ i.address.place }}</div>
                 </div>
                 <div v-show="1 === number.id">
                   <div v-if="curInfo && Array.isArray(curInfo)">
@@ -343,7 +455,7 @@
               </div>
             </div>
             <div class="screen-bottom">
-              <div v-for="item in panel.menu" :key="item.id">
+              <div v-for="item in menuFnList" :key="item.id">
                 {{ item.label }}</div
               >
             </div>
@@ -364,10 +476,20 @@
 </template>
 
 <style lang="less" scoped>
-  .container {
-    width: 80vw;
-    height: 800px;
+  .centralControlSystem {
+    position: relative;
+    width: 1000px;
+    height: 600px;
     margin: 0 auto;
+    .zoomIn {
+      position: absolute;
+      top: 75%;
+      left: 30%;
+      width: 33px;
+      height: 60px;
+      transform: rotateZ(-60deg);
+      cursor: pointer;
+    }
     .control {
       background: url('@/assets/img/组4.png');
       width: 1000px;
@@ -405,6 +527,7 @@
             flex-wrap: wrap;
             align-items: center;
             justify-content: center;
+            font-size: 15px;
           }
         }
         .menuList {
@@ -429,6 +552,7 @@
         display: flex;
         flex-direction: column;
         width: 50%;
+        font-size: 13px;
         .screen {
           height: 50%;
           position: relative;
@@ -454,6 +578,11 @@
               .screen-info-left {
                 background-color: rgb(203, 236, 252);
                 width: 70%;
+                .info {
+                  color: red;
+                  font-size: 18px;
+                  font-weight: 600;
+                }
               }
 
               .screen-info-right {
@@ -486,45 +615,49 @@
           }
         }
         .button-list {
+          margin: 37px 0 0 -4px;
           height: 50%;
           display: grid;
           grid-template-columns: [c1] 30px [c2] 30px [c3] 30px [c4] 30px [c5] 30px [c6] 30px [c7] 40px;
           grid-template-rows: [r1] 40px [r2] 40px [r3] 40px [r4] 40px [c5] 40px;
           line-height: 100px;
           row-gap: 10px;
-          column-gap: 30px;
+          column-gap: 40px;
           button {
+            box-sizing: content-box;
             height: 30px;
             width: 55px;
             border-radius: 5px;
             cursor: pointer;
             color: #fff;
             font-weight: 400;
+            border: 1px solid #484040;
+            box-shadow: 0 5px 5px 0 #998d8d;
           }
 
           .routine {
             background-color: rgb(51, 148, 243);
           }
           .routine:active {
-            background-color: rgb(36, 129, 223);
+            background-color: rgb(12, 93, 175);
           }
           .waring {
             background-color: rgb(255, 151, 55);
           }
           .waring:active {
-            background-color: rgb(233, 109, 27);
+            background-color: rgb(194, 88, 17);
           }
           .danger {
             background-color: rgb(252, 52, 56);
           }
           .danger:active {
-            background-color: rgb(224, 33, 36);
+            background-color: rgb(189, 23, 26);
           }
           .zhengchang {
             background-color: rgb(42, 203, 128);
           }
           .zhengchang:active {
-            background-color: rgb(37, 181, 113);
+            background-color: rgb(10, 187, 104);
           }
         }
       }
